@@ -4,8 +4,9 @@ const express = require('express');
 const expressLayout = require('express-ejs-layouts');
 const cookieParser = require('cookie-parser');  
 const session = require('express-session');
-//const methodOverride = require('method-override');
+const methodOverride = require('method-override');
 const MongoStore = require('connect-mongo');
+const { isActiveRoute } = require('./server/helpers/route-Helpers');
 const connectDB = require('./server/config/db');
 const app = express();
 app.use(express.static('public'));
@@ -18,7 +19,7 @@ app.use(express.static(path.join(__dirname, "public")))
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
-//app.use(methodOverride('_method'));
+app.use(methodOverride('_method'));
 
 app.use(session({
   secret: 'keyboard cat',
@@ -32,7 +33,14 @@ app.use(session({
 
 app.use(express.static('public'));
 app.use(expressLayout);
+
+  app.locals.isActiveRoute = isActiveRoute; 
+ 
+
+
 app.set('view engine', 'ejs');
+
+
 app.set('views', path.join(__dirname, 'views'));
 
 app.use('/', require('./server/routes/main'));

@@ -1,35 +1,35 @@
 const express = require('express');
 const Post = require('../models/Post'); // Ensure this path is correct
-
+const { isActiveRoute } = require('../helpers/route-Helpers');
 const router = express.Router();
 
 // Define your routes here
-router.get('/', async (req, res) => {
+router.get('', async (req, res) => {
     try {
         const locals = {
             title: "NodeJs Blog",
             description: "Simple Blog created with NodeJs, Express & MongoDb."
         };
 
-        console.log(locals);
         let perPage = 10;
-        let page = req.query.page || 1;
+        let page = parseInt(req.query.page) || 1;
 
         const data = await Post.aggregate([{ $sort: { createdAt: -1 } }])
             .skip(perPage * (page - 1))
             .limit(perPage);
 
-        console.log(data);
         const count = await Post.countDocuments({});
-        console.log(count);
-        const nextPage = parseInt(page) + 1;
-
-        console.log(nextPage);
+        const nextPage = page + 1;
         const hasNextPage = nextPage <= Math.ceil(count / perPage);
 
-        console.log(hasNextPage);
-       
-        res.render("index.ejs", {data});
+        res.render('index', {
+            locals,
+            data,
+            current: page,
+            nextPage: hasNextPage ? nextPage : null,
+            currentRoute: '/',
+            isActiveRoute
+        });
 
     } catch (error) {
         console.log(error);
@@ -109,7 +109,8 @@ router.get('/post/:id', async (req, res) => {
         res.render('post', {
             locals,
             data,
-            currentRoute: `/post/${postId}`
+            currentRoute: `/post/${postId}`,
+            isActiveRoute
         });
     } catch (error) {
         console.log(error);
@@ -120,41 +121,43 @@ router.get('/post/:id', async (req, res) => {
 insertPostData();
 
 router.post('/search', async (req, res) => {
-  try {
-      const locals = {
-          title: "Search",
-          description: "Simple Blog created with NodeJs, Express & MongoDb."
-      };
+    try {
+        const locals = {
+            title: "Search",
+            description: "Simple Blog created with NodeJs, Express & MongoDb."
+        };
 
-      let searchTerm = req.body.searchTerm;
-      const searchNoSpecialChar = searchTerm.replace(/[^a-zA-Z0-9 ]/g, "");
+        let searchTerm = req.body.searchTerm;
+        const searchNoSpecialChar = searchTerm.replace(/[^a-zA-Z0-9 ]/g, "");
 
-      const data = await Post.find({
-          $or: [
-              { title: { $regex: new RegExp(searchNoSpecialChar, 'i') } },
-              { body: { $regex: new RegExp(searchNoSpecialChar, 'i') } }
-          ]
-      });
+        const data = await Post.find({
+            $or: [
+                { title: { $regex: new RegExp(searchNoSpecialChar, 'i') } },
+                { body: { $regex: new RegExp(searchNoSpecialChar, 'i') } }
+            ]
+        });
 
-      console.log('Search results:', data);
+        console.log('Search results:', data);
 
-      res.render('partials/search', {
-          data: Array.isArray(data) ? data : [],
-          locals,
-          searchTerm,
-          currentRoute: '/'
-      });
+        res.render('partials/search', {
+            data: Array.isArray(data) ? data : [],
+            locals,
+            searchTerm,
+            currentRoute: '/',
+            isActiveRoute
+        });
 
-  } catch (error) {
-      console.log(error);
-      res.status(500).send("Internal Server Error");
-  }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Internal Server Error");
+    }
 });
 
-
-
 router.get('/about', (req, res) => {
-    res.render('about');
+    res.render('about', {
+        currentRoute: '/about',
+        isActiveRoute
+    });
 });
 
 module.exports = router;

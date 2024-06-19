@@ -115,6 +115,7 @@ router.get('/add-post', authMiddleware, async (req, res) => {
     }
 
     const data = await Post.find();
+    console.log(data);
     res.render('admin/add-post', {
       locals,
       layout: adminLayout
